@@ -9,7 +9,7 @@ RUN swipl -g "use_module(library(http/http_server)), halt(0)" && \
     swipl -g "use_module(library(http/http_json)), halt(0)"
 
 # Copy server file
-COPY server.pl .
+COPY src/server.pl .
 
 # Set default port
 ENV PORT=8080
