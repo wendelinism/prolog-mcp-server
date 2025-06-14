@@ -1,0 +1,2 @@
+[console_scripts]
+prolog-mcp-server = prolog_mcp_server.mcp_server:main

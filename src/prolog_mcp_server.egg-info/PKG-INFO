@@ -1,0 +1,26 @@
+Metadata-Version: 2.4
+Name: prolog-mcp-server
+Version: 0.1.0
+Summary: Model Context Protocol Server for SWI Prolog integration
+Author-email: Your Name <your.email@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/prolog-mcp-server
+Project-URL: Repository, https://github.com/yourusername/prolog-mcp-server
+Project-URL: Issues, https://github.com/yourusername/prolog-mcp-server/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.28.0
+Requires-Dist: docker>=6.0.0
+Requires-Dist: fastmcp>=0.1.0
+
+# Prolog MCP server
+Implementation of a Model Context Protocol Server, to allow easy communication between an LLM and a Prolog server.
