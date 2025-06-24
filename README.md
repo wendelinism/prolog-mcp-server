@@ -34,7 +34,7 @@ git clone https://github.com/wendelinism/prolog-mcp-server.git
 2. Prepare python environment
 Install python venv and pip:
 ```bash
-sudo apt intall python3.12-venv python3-pip
+sudo apt install python3.12-venv
 ```
 Move into newly downloaded folder
 ```bash
