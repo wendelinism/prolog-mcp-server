@@ -71,7 +71,7 @@ To make this change effective, restart the terminal session with
 ```bash
 exec su - $USER
 ```
-then go back to the project folder and. Now you should be able to build the docker image.
+then go back to the project folder. Now you should be able to build the docker image.
 
 ## Installation on Windows and Mac
 Should work on windows and Mac OS as well, but not tested yet.
