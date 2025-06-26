@@ -11,66 +11,71 @@ A Model Context Protocol (MCP) server that enables direct integration between La
 - Support for both HTTP and stdio transport
 - Docker containerization support for the SWI Prolog server
 - Implemented as python package for easy integration to agentic LLM applications
+- **Compatible with MCP Inspector for interactive testing and debugging**
+
+![MCP Inspector Interface](images/mcp-inspector-screenshot.png)
+*Prolog MCP Server running in MCP Inspector showing available tools and interface*
 
 
 
 ## Prerequisites
 
 - Python 3.8 or higher
-- SWI-Prolog installed on your system
 - Git (for installation from source)
+- Docker
 
 ## Installation on linux
 
-1. Get source code from github
+1. Make sure git, python-venv and docker are installed, i.e.
 Install git 
 ```bash
-sudo apt install git
+sudo apt install git python3.12-venv docker-buildx
 ```
 
+2. Clone git repo
 ```bash
 git clone https://github.com/wendelinism/prolog-mcp-server.git
 ```
-2. Prepare python environment
-Install python venv and pip:
-```bash
-sudo apt install python3.12-venv
-```
+
 Move into newly downloaded folder
 ```bash
 cd prolog-mcp-server/
 ```
-Create local python environment
+
+3. Create local python environment
 ```bash
 python3 -m venv .
 ```
-
-
-3. Install python package from source code
-
 Activate local python environment
 ```bash
 source bin/activate
 ```
 
-Install python package prolog-mcp-server
+4. Install python package prolog-mcp-server, and all it's python dependencies
+
 ```bash
 pip install -e .
 ```
 
-4. Install docker and build prolog docker image
-```bash
-sudo apt install docker-buildx
-```
-Add local user do docker group:
-```bash
-sudo usermod -aG docker $USER
-```
-Need to lock out and back in to activate group change.
-Build docker image:
+5. Build prolog docker image (without this the MCP-server will have no prolog server to connect to)
+
+
 ```bash
 docker buildx build -t prolog-docker-image -f docker/prolog.dockerfile .
 ```
+In case your user does not have permission yet to interact with docker, add local user to docker group:
+```bash
+sudo usermod -aG docker $USER
+```
+To make this change effective, restart the terminal session with
+```bash
+exec su - $USER
+```
+then go back to the project folder and. Now you should be able to build the docker image.
+
+## Installation on Windows and Mac
+Should work on windows and Mac OS as well, but not tested yet.
+
 
 ## Usage
 
@@ -85,12 +90,14 @@ Check the `examples/` directory for:
 - Stdio transport demo  
 - Client implementation examples
 
-To start standalon Prolog MCP server with http server:
+To start standalone Prolog MCP server with http server:
 ```bash
 python3 examples/demo_prolog_MCP-server-start_http.py
 ```
 
-Then, to test running MCP server with MCP inspector, first install npm:
+### Test MCP-server with MCP inspector
+
+To test a running MCP server with MCP inspector, first install npm:
 ```bash
 sudo apt install npm -y
 ```
@@ -107,15 +114,13 @@ Hit connect, for test you should be able to go to "tools" now, and there "list t
 
 A Dockerfile is provided in the `docker/` directory for containerized deployment.
 
-## Credits
-
 ## License
 
 MIT License - see LICENSE file for details.
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome. Feel free to submit issues and pull requests.
 
 ## Credits
 
