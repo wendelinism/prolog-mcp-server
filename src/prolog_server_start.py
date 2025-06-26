@@ -2,7 +2,7 @@ import requests
 import docker
 import time
 
-from docker.errors import DockerException, APIError
+from docker.errors import DockerException, APIError, ImageNotFound
 
 class PrologServerController:
     def __package_clause(self, clause_text):
@@ -26,7 +26,11 @@ class PrologServerController:
         try:
             self.docker_client = docker.from_env()
         except DockerException as e:
-            raise RuntimeError(f"Docker SDK/daemon unavailable: {e}")
+            raise RuntimeError(
+                f"Docker is not available: {e}\n"
+                f"Please ensure Docker is installed and running.\n"
+                f"See installation instructions in README.md"
+            )
 
     def start_server(self, timeout_sec=20):
         """Start the Prolog server container"""
@@ -58,8 +62,18 @@ class PrologServerController:
             
             raise TimeoutError(f"Server didn't start within {timeout_sec} seconds")
             
+        except ImageNotFound:
+            raise RuntimeError(
+                f"Docker image '{self.image_name}' not found.\n"
+                f"Please build the Prolog docker image first:\n"
+                f"  docker buildx build -t {self.image_name} -f docker/prolog.dockerfile .\n"
+                f"See installation instructions in README.md for details."
+            )
         except APIError as e:
-            raise RuntimeError(f"Docker API error: {e}")
+            raise RuntimeError(
+                f"Failed to start Docker container: {e}\n"
+                f"Please ensure Docker daemon is running and you have sufficient permissions."
+            )
 
     def stop_server(self):
         """Stop and clean up the container"""
