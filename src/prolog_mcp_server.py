@@ -59,7 +59,8 @@ def stop_prolog_server():
         return f"Failed to stop Prolog server: {e}"
 
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the prolog-mcp-server command."""
     parser = argparse.ArgumentParser(description="Prolog MCP Server")
     parser.add_argument("--transport", choices=["stdio", "streamable-http"], 
                        default="streamable-http", 
@@ -74,3 +75,7 @@ if __name__ == "__main__":
         print("MCP Server stopped by user.")
     finally:
         print("MCP Server stopped.")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,3 +1,4 @@
+LICENSE
 README.md
 pyproject.toml
 src/prolog_mcp_server.egg-info/PKG-INFO
@@ -6,3 +7,4 @@ src/prolog_mcp_server.egg-info/dependency_links.txt
 src/prolog_mcp_server.egg-info/entry_points.txt
 src/prolog_mcp_server.egg-info/requires.txt
 src/prolog_mcp_server.egg-info/top_level.txt
+tests/test_prolog-server-start_without_MCP.py

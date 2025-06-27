@@ -79,21 +79,22 @@ Should work on windows and Mac OS as well, but not tested yet.
 
 ## Usage
 
-### Starting the Server
+### Starting the Standalone Server with HTTP
 
-For HTTP transport setup, see the [HTTP transport implementation](examples/demo_prolog_MCP-server-start_http.py#L11-L22).
+For HTTP transport setup, see the the minimal example implemenation to start the standalone Prolg MCP server at [HTTP transport implementation](examples/demo_prolog_MCP-server-start_http.py#L11-L22).
 
-### Examples
+### Examples for HTTP and stdio usage
 
 Check the `examples/` directory for:
-- HTTP transport demo
-- Stdio transport demo  
-- Client implementation examples
+- [Demo Standalone Prolog MCP server using HTTP transport](examples/demo_prolog_MCP-server-start_http.py), detectable for MCP clients
+- [Demo MCP client implementation with Prolog MCP server invoked, using stdio transport](examples/demo_MCP-client_invoking_Prolog-MCP-server_stdio.py), starting prolog, adding clauses, running query
 
 To start standalone Prolog MCP server with http server:
 ```bash
 python3 examples/demo_prolog_MCP-server-start_http.py
 ```
+
+
 
 ### Test MCP-server with MCP inspector
 

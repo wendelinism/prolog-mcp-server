@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
 Simple test client for the prolog-mcp-server package using stdio transport.
-Uses the installed package directly.
+Uses the installed package via the script entry point.
 """
 
 import asyncio
 from fastmcp import Client
-from fastmcp.client.transports import PythonStdioTransport
+from fastmcp.client.transports import StdioTransport
 
 async def test_prolog_mcp():
     """Test the prolog MCP server functionality."""
     
     # Create stdio transport using the installed package
-    transport = PythonStdioTransport("src/prolog_mcp_server.py", args=["--transport", "stdio"])
+    # This will run: prolog-mcp-server --transport stdio
+    transport = StdioTransport("prolog-mcp-server", ["--transport", "stdio"])
     
     print("🔗 Connecting to Prolog MCP server via stdio...")
     
@@ -63,23 +64,19 @@ async def test_prolog_mcp():
             result = await session.call_tool("query_prolog", {"query": "grandmother(GM, carol)."})
             print(f"   Query result: {result[0].text}")
             
-            # 5. Test a simple membership query
-            print("\n5. Testing membership query...")
-            result = await session.call_tool("query_prolog", {"query": "member(2, [1,2,3])."})
-            print(f"   Query result: {result[0].text}")
             
-            # 6. Remove a clause
-            print("\n6. Removing a clause...")
+            # 5. Remove a clause
+            print("\n5. Removing a clause...")
             result = await session.call_tool("remove_clause", {"clause": "father(bob, carol)."})
             print(f"   Remove result: {result[0].text}")
             
-            # 7. List clauses after removal
-            print("\n7. Clauses after removal:")
+            # 6. List clauses after removal
+            print("\n6. Clauses after removal:")
             result = await session.call_tool("get_clauses", {})
             print(f"   {result[0].text}")
             
-            # 8. Stop the server
-            print("\n8. Stopping Prolog server...")
+            # 7. Stop the server
+            print("\n7. Stopping Prolog server...")
             result = await session.call_tool("stop_prolog_server", {})
             print(f"   Result: {result[0].text}")
             
