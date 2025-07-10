@@ -53,14 +53,17 @@ handle_list_clauses(_Request) :-
     findall(Clause, dynamic_clause(Clause), Clauses),
     reply_json(Clauses).
 
-% Handle queries: expects 'q' parameter, runs it, and returns JSON results
+% Handle queries: expects 'q' parameter, runs it, and returns JSON results with variable bindings
 handle_query(Request) :-
     catch(
         (   http_parameters(Request, [q(QueryString, [string])]),
             term_string(Term, QueryString),  % Convert string to Prolog term
-            (   call(Term)  % Check if the query succeeds
-            ->  reply_json_dict(_{result: true})  % Return true if the query succeeds
-            ;   reply_json_dict(_{result: false, message: "Query failed without errors"})  % Return false with a message
+            findall(Term, call(Term), Solutions),
+            (   Solutions = []
+            ->  reply_json_dict(_{result: false, message: "No solutions found"})
+            ;   Solutions = [_|_]
+            ->  format_solutions(Term, Solutions, FormattedSolutions),
+                reply_json_dict(_{result: success, solutions: FormattedSolutions})
             )
         ),
         Error,
@@ -69,6 +72,12 @@ handle_query(Request) :-
             reply_json_dict(_{result: error, message: ErrorString})  % Return error as JSON
         )
     ).
+
+% Format solutions by converting terms to strings
+format_solutions(_, [], []).
+format_solutions(Template, [Solution|Rest], [SolutionStr|FormattedRest]) :-
+    format(string(SolutionStr), '~w', [Solution]),
+    format_solutions(Template, Rest, FormattedRest).
 
 
 % Start the HTTP server
