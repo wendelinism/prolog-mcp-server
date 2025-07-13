@@ -79,6 +79,45 @@ Should work on windows and Mac OS as well, but not tested yet.
 
 ## Usage
 
+### Integration with Claude Desktop
+![Claude Desktop with Prolog-MCP-server connector](images/Claude-Desktop_connectors_mk.png)
+*Claude Desktop with connector to Prolog-MCP-server*
+
+![Claude Desktop with avalable tools for Prolog-MCP-server](images/Claude-Desktop_prolog-mcp-server_tools-view.png)
+*Claude Desktop can choose to use any of the tools shown for connected Prolog-MCP-server*
+
+If Claude Desktop is installed, the Prolog MCP server can be added to the Claude config, so that Claude can start a local instance of the server and run prolog code directly.
+Preconditions: 
+* Local clone of prolog-mcp-server repository (see above)
+* Local python environment installed (see above)
+* Docker prolog-docker-image built (see above)
+
+#### Configuration
+
+Add the following configuration to your `claude_desktop_config.json` file:
+
+**Linux/Mac**: `~/.config/Claude/claude_desktop_config.json`  
+**Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "prolog-mcp-server": {
+      "command": "/path/to/python-env/bin/python",
+      "args": [
+        "/path/to/prolog-mcp-server/src/prolog_mcp_server.py",
+        "--transport=stdio"
+      ],
+      "env": {
+        "PATH": "/path/to/python-env/bin:/usr/local/bin:/usr/bin:/bin"
+      }
+    }
+  }
+}
+```
+
+> **Note**: Update both `/path/to/python-env/` and `/path/to/prolog-mcp-server/` to match your actual installation paths.
+
 ### Starting the Standalone Server with HTTP
 
 For HTTP transport setup, see the the minimal example implemenation to start the standalone Prolg MCP server at [HTTP transport implementation](examples/demo_prolog_MCP-server-start_http.py#L11-L22).
@@ -93,8 +132,6 @@ To start standalone Prolog MCP server with http server:
 ```bash
 python3 examples/demo_prolog_MCP-server-start_http.py
 ```
-
-
 
 ### Test MCP-server with MCP inspector
 
