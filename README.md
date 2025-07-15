@@ -86,7 +86,7 @@ Should work on windows and Mac OS as well, but not tested yet.
 ![Claude Desktop with avalable tools for Prolog-MCP-server](images/Claude-Desktop_prolog-mcp-server_tools-view.png)
 *Claude Desktop can choose to use any of the tools shown for connected Prolog-MCP-server*
 
-If Claude Desktop is installed, the Prolog MCP server can be added to the Claude config, so that Claude can start a local instance of the server and run prolog code directly.
+If [Claude Desktop](https://claude.ai/) is installed, the Prolog MCP server can be added to the Claude config, so that Claude can start a local instance of the server and run prolog code directly.
 Preconditions: 
 * Local clone of prolog-mcp-server repository (see above)
 * Local python environment installed (see above)
