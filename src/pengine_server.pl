@@ -4,13 +4,19 @@
 % 1. Start pengine server:
 %    PORT=9998 swipl -g "start_pengine_server" -t "halt" src/pengine_server.pl
 %
-% 2. Test basic pengine creation (works):
+% 2a. Test local basic pengine creation, not on server (works):
 %    swipl -g "use_module(library(pengines)), pengine_create([id(PengineID), sandbox(true)]), write('Created pengine: '), write(PengineID), nl, halt"
 %
-% 3. Create session via HTTP (works):
+% 2b. Test basic pengine creation on that server created in 1, and keep interactive session open(works):
+% swipl -g "use_module(library(pengines)), pengine_create([server('http://localhost:9998'), id(PengineID), sandbox(true)]), write('Created pengine: '), write(PengineID), nl"
+%
+% 3. Create pengine/session via HTTP (works):
 %    curl -X POST -H "Content-Type: application/json" -d '{"action": "create"}' http://localhost:9998/session
 %
-% 4. Test clause assertion (currently fails):
+% 4. Test whether pengine is alive (always shown dead currently, so either pengine or request fails)
+% curl "http://localhost:9998/pengine_status?pengine_id=YOUR_PENGINE_ID"
+%
+% 5. Test clause assertion (currently fails):
 %    curl -X POST -H "Content-Type: application/json" -d '{"session_id": "SESSION_ID", "clause": "parent(tom, bob)."}' http://localhost:9998/assert
 %
 % Known issues:
@@ -41,29 +47,73 @@
 :- http_handler(root(list_clauses), handle_list_clauses, [method(get)]).
 :- http_handler(root(query), handle_query, [method(get)]).
 :- http_handler(root(cleanup), handle_cleanup, [method(post)]).
+:- http_handler(root(pengine_status), handle_pengine_status, [method(get)]).
+:- http_handler(root(start_long_task), handle_start_long_task, [method(post)]).
 
 % Session creation/management
+% Debug logging helper
+debug_log(Msg) :-
+    open('/tmp/pengine_debug.log', append, Stream),
+    get_time(Time),
+    format_time(atom(TimeStr), '%Y-%m-%d %H:%M:%S', Time),
+    format(Stream, '[~w] ~w~n', [TimeStr, Msg]),
+    close(Stream).
+
 handle_session(Request) :-
-    http_read_json_dict(Request, Dict),
+    debug_log('Session handler called'),
+    catch(
+        http_read_json_dict(Request, Dict),
+        Error,
+        (debug_log(json_parsing_failed(Error)), throw(Error))
+    ),
+    debug_log(parsed_json(Dict)),
     (   Dict.get(action) == "create"
-    ->  create_user_session(SessionID, PengineID),
-        reply_json(_{status:success, session_id:SessionID, pengine_id:PengineID})
+    ->  (debug_log('Creating session'),
+         create_user_session(SessionID, PengineID),
+         reply_json(_{status:success, session_id:SessionID, pengine_id:PengineID}))
     ;   Dict.get(action) == "destroy"
-    ->  SessionID = Dict.get(session_id),
-        destroy_user_session(SessionID),
-        reply_json(_{status:success, message:"Session destroyed"})
-    ;   reply_json(_{status:error, message:"Invalid action"})
+    ->  (debug_log('Destroying session'),
+         SessionID = Dict.get(session_id),
+         destroy_user_session(SessionID),
+         reply_json(_{status:success, message:"Session destroyed"}))
+    ;   (debug_log(invalid_action(Dict.get(action))),
+         reply_json(_{status:error, message:"Invalid action"}))
     ).
 
 % Create isolated pengine for user session using standard pengine HTTP API
 create_user_session(SessionID, PengineID) :-
     uuid(SessionID),
+    debug_log(creating_session(SessionID)),
+    
     % Use standard pengine creation - this will create a pengine with proper HTTP handling
-    pengine_create([
-        id(PengineID),
-        sandbox(true)
-    ]),
-    assertz(session_pengine(SessionID, PengineID)).
+    % Add explicit idle timeout of 300 seconds
+    catch(
+        pengine_create([
+            id(PengineID),
+            sandbox(true),
+            idle_timeout(300)   % 300 seconds idle timeout
+        ]),
+        Error,
+        (debug_log(pengine_creation_failed(Error)), throw(Error))
+    ),
+    
+    debug_log(pengine_created(PengineID)),
+    
+    % Check if pengine is actually alive immediately after creation
+    (   pengine_property(PengineID, self(PengineID))
+    ->  debug_log(pengine_alive_after_creation(PengineID))
+    ;   debug_log(pengine_dead_immediately(PengineID))
+    ),
+    
+    assertz(session_pengine(SessionID, PengineID)),
+    debug_log(session_mapped(SessionID, PengineID)),
+    
+    % Immediately verify the mapping was stored
+    (   session_pengine(SessionID, PengineID)
+    ->  debug_log(session_mapping_verified(SessionID, PengineID))
+    ;   debug_log(session_mapping_failed_to_store(SessionID, PengineID))
+    ).
+
 
 % Cleanup user session
 destroy_user_session(SessionID) :-
@@ -73,6 +123,37 @@ destroy_user_session(SessionID) :-
         retractall(session_clause(SessionID, _))
     ;   true
     ).
+
+handle_pengine_status(Request) :-
+    http_parameters(Request, [pengine_id(PID, [string])]),
+    debug_log(checking_pengine_status(PID)),
+    
+    % Check pengine using multiple methods for better debugging
+    (   pengine_property(PID, self(PID))
+    ->  Method1 = alive
+    ;   Method1 = dead
+    ),
+    
+    % Try alternative check - see if we can get any properties
+    (   catch(pengine_property(PID, _), _, fail)
+    ->  Method2 = has_properties  
+    ;   Method2 = no_properties
+    ),
+    
+    % Check our session mapping (fix the bug - use _ instead of unbound SessionID)
+    (   session_pengine(_, PID)
+    ->  SessionMapping = found
+    ;   SessionMapping = not_found
+    ),
+    
+    debug_log(pengine_status_check(PID, method1=Method1, method2=Method2, session_mapping=SessionMapping)),
+    
+    (   Method1 = alive
+    ->  reply_json(_{status:alive, pengine_id:PID, method1:Method1, method2:Method2, session_mapping:SessionMapping})
+    ;   reply_json(_{status:dead, pengine_id:PID, method1:Method1, method2:Method2, session_mapping:SessionMapping})
+    ).
+
+
 
 % Get pengine ID for session
 get_session_pengine(Request, SessionID, PengineID) :-
@@ -156,6 +237,33 @@ handle_cleanup(Request) :-
     SessionID = Dict.get(session_id),
     destroy_user_session(SessionID),
     reply_json(_{status:success, message:"Session cleaned up"}).
+
+% Start a long-running task to test pengine lifecycle
+handle_start_long_task(Request) :-
+    catch(
+        (   http_read_json_dict(Request, Dict),
+            SessionID = Dict.get(session_id),
+            session_pengine(SessionID, PengineID),
+            debug_log(starting_long_task(SessionID, PengineID)),
+            % Start a task that counts and logs every 5 seconds for 2 minutes
+            pengine_send(PengineID, ask(count_and_log(1, 24), [])),
+            reply_json(_{status:success, message:"Long task started", pengine_id:PengineID})
+        ),
+        Error,
+        (   debug_log(long_task_failed(Error)),
+            format(string(ErrorString), '~w', [Error]),
+            reply_json(_{status:error, message:ErrorString})
+        )
+    ).
+
+% Predicate to count and log - will be sent to pengine
+count_and_log(N, Max) :-
+    N =< Max,
+    get_time(Time),
+    format('Task step ~w at time ~w~n', [N, Time]),
+    sleep(5),
+    N1 is N + 1,
+    count_and_log(N1, Max).
 
 % Collect all solutions from pengine
 collect_solutions(PengineID, Solutions) :-
