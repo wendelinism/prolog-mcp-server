@@ -18,7 +18,7 @@ if __name__ == "__main__":
     print("-" * 50)
     
     try:
-        # This will run the server
-        mcp.run(transport="streamable-http")
+        # This will run the server with specified backend
+        mcp.run(transport="streamable-http", backend="undefined")
     except KeyboardInterrupt:
         print("\n🛑 Server stopped by user")
