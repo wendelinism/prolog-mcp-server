@@ -19,7 +19,7 @@ if __name__ == "__main__":
     
     try:
         # This will run the server with specified backend
-        #mcp.run(transport="streamable-http", backend="isolated")
-        mcp.run(transport="streamable-http", backend="pengines")
+        mcp.run(transport="streamable-http", backend="isolated")
+        #mcp.run(transport="streamable-http", backend="pengines")
     except KeyboardInterrupt:
         print("\n🛑 Server stopped by user")

@@ -1,7 +1,7 @@
  #!/usr/bin/env python3
 """
 Simple isolated multi-user server that actually works.
-Uses namespace prefixing to ensure isolation without complex subprocess manipulation.
+Uses process isolation to ensure session separation.
 """
 
 import subprocess
@@ -15,7 +15,7 @@ import shutil
 from typing import Dict, Optional, Tuple
 
 class SimpleIsolatedSession:
-    """Simple session with namespace-based isolation"""
+    """Simple session with process-based isolation"""
     
     def __init__(self, session_id: str, timeout_sec: int = 300):
         self.session_id = session_id
@@ -23,9 +23,7 @@ class SimpleIsolatedSession:
         self.last_activity = time.time()
         self.lock = threading.Lock()
         self.clauses = []
-        # Use session ID as namespace prefix to ensure isolation
-        self.namespace = f"sess_{session_id.replace('-', '_')[:8]}"
-        
+
         # Create session directory
         self.session_dir = tempfile.mkdtemp(prefix=f"prolog_simple_{self.session_id[:8]}_")
     
@@ -42,38 +40,21 @@ class SimpleIsolatedSession:
                     shutil.rmtree(self.session_dir)
                 except:
                     pass
-    
-    def _namespace_predicate(self, predicate: str) -> str:
-        """Add namespace prefix to predicate"""
-        # Simple approach: prefix predicate names with session namespace
-        if '(' in predicate:
-            pred_name = predicate.split('(')[0].strip()
-            rest = predicate[len(pred_name):]
-            return f"{self.namespace}_{pred_name}{rest}"
-        return f"{self.namespace}_{predicate}"
-    
-    def _remove_namespace_prefix(self, text: str) -> str:
-        """Remove namespace prefix from predicate text"""
-        # Remove the namespace prefix pattern like "sess_12345678_"
-        import re
-        return re.sub(f'{self.namespace}_', '', text)
-    
+
     def _create_session_script(self, clauses: list, query: str) -> str:
         """Create isolated Prolog script"""
-        # Remove namespace prefixes from clauses and query for execution
-        clean_clauses = [self._remove_namespace_prefix(clause) for clause in clauses]
-        clean_query = self._remove_namespace_prefix(query.rstrip('.'))
-        
+        query = query.rstrip('.')
+
         return f"""
 % Simple isolated session {self.session_id[:8]}
-% Clauses without namespace prefixes (isolation via separate processes)
+% Isolation via separate processes
 
 % Define session clauses
-{chr(10).join(clean_clauses)}
+{chr(10).join(clauses)}
 
 % Test query
 isolated_test :-
-    {clean_query},
+    {query},
     write('TRUE'), nl, !.
 isolated_test :-
     write('FALSE'), nl.
@@ -83,7 +64,7 @@ isolated_test :-
 """
     
     def execute_query(self, query: str) -> Tuple[bool, str]:
-        """Execute query in isolated namespace"""
+        """Execute query in isolated process"""
         with self.lock:
             try:
                 # Create script file
@@ -181,7 +162,7 @@ isolated_test :-
 
 
 class SimpleIsolatedServer:
-    """Simple multi-user server with namespace isolation"""
+    """Simple multi-user server with process isolation"""
     
     def __init__(self, session_timeout_sec: int = 300):
         self.sessions: Dict[str, SimpleIsolatedSession] = {}
@@ -262,8 +243,7 @@ class SimpleIsolatedServer:
                 sid: {
                     'alive': session.is_alive(),
                     'last_activity': session.last_activity,
-                    'clauses_count': len(session.clauses),
-                    'namespace': session.namespace
+                    'clauses_count': len(session.clauses)
                 }
                 for sid, session in self.sessions.items()
             }
