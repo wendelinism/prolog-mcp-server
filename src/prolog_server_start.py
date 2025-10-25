@@ -162,4 +162,5 @@ class PrologServerController:
 
 if __name__ == "__main__":
     print("This module provides PrologServerController class.")
-    print("See folder examples/ for usage examples.")
+    print("See folder " \
+    "examples/ for usage examples.")
