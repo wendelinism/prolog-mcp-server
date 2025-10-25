@@ -34,7 +34,7 @@ def initialize_backend(transport="streamable-http", backend="isolated"):
             print("Using new multi-user backend for HTTP transport")
         elif backend == "isolated":
             working_isolated_controller = WorkingIsolatedController(port=8082)
-            print("Using perfect isolation backend for HTTP transport (RECOMMENDED)")
+            print("Using isolation backend for HTTP transport (RECOMMENDED)")
         else:
             prolog = PrologServerController(port=9090)
             print("Using Docker backend for HTTP transport")
@@ -59,8 +59,8 @@ prolog_mcp = PrologMCP(
     name="Prolog MCP Server",
     instructions=(
         "Used for LLMs to interact with a SWI Prolog server. "
-        "Supports single-user (stdio) and multi-user (HTTP) modes with PERFECT session isolation. "
-        "Each user gets a completely isolated Prolog session with namespace protection. "
+        "Supports single-user (stdio) and multi-user (HTTP) modes with session isolation. "
+        "Each user gets an separate Prolog prcess. "
         "There are separate tools to add and remove single Prolog clauses "
         "(clauses can be rules or facts), "
         "to list all currently active Prolog clauses, "
@@ -79,7 +79,7 @@ def add_clause(clause: str):
         return pengine_controller.add_clause(current_session_id, clause)
     elif multi_user_controller and current_session_id:  # New multi-user mode
         return multi_user_controller.add_clause(current_session_id, clause)
-    elif working_isolated_controller and current_session_id:  # Perfect isolation mode
+    elif working_isolated_controller and current_session_id:  #  Isolation mode
         return working_isolated_controller.add_clause(current_session_id, clause)
     else:
         return "Error: No Prolog backend available"
@@ -93,7 +93,7 @@ def get_clauses():
         return pengine_controller.get_clauses(current_session_id)
     elif multi_user_controller and current_session_id:  # New multi-user mode
         return multi_user_controller.get_clauses(current_session_id)
-    elif working_isolated_controller and current_session_id:  # Perfect isolation mode
+    elif working_isolated_controller and current_session_id:  # Isolation mode
         return working_isolated_controller.get_clauses(current_session_id)
     else:
         return "Error: No Prolog backend available"
@@ -107,7 +107,7 @@ def remove_clause(clause: str):
         return pengine_controller.remove_clause(current_session_id, clause)
     elif multi_user_controller and current_session_id:  # New multi-user mode
         return multi_user_controller.remove_clause(current_session_id, clause)
-    elif working_isolated_controller and current_session_id:  # Perfect isolation mode
+    elif working_isolated_controller and current_session_id:  # Isolation mode
         return working_isolated_controller.remove_clause(current_session_id, clause)
     else:
         return "Error: No Prolog backend available"
@@ -121,7 +121,7 @@ def query_prolog(query: str):
         return pengine_controller.query(current_session_id, query)
     elif multi_user_controller and current_session_id:  # New multi-user mode
         return multi_user_controller.query(current_session_id, query)
-    elif working_isolated_controller and current_session_id:  # Perfect isolation mode
+    elif working_isolated_controller and current_session_id:  # Isolation mode
         return working_isolated_controller.query(current_session_id, query)
     else:
         return "Error: No Prolog backend available"
@@ -144,11 +144,11 @@ def start_prolog_server():
             with session_lock:
                 current_session_id = multi_user_controller.create_session()
             return f"Multi-user server started. Session ID: {current_session_id[:8]}..."
-        elif working_isolated_controller:  # Perfect isolation mode
+        elif working_isolated_controller:  # Isolation mode
             working_isolated_controller.start_server()
             with session_lock:
                 current_session_id = working_isolated_controller.create_session()
-            return f"Perfect isolation server started. Session ID: {current_session_id[:8]}..."
+            return f"Isolation server started. Session ID: {current_session_id[:8]}..."
         else:
             return "Error: No Prolog backend configured"
     except Exception as e:
@@ -174,12 +174,12 @@ def stop_prolog_server():
                 current_session_id = None
             multi_user_controller.stop_server()
             return "Multi-user server stopped."
-        elif working_isolated_controller:  # Perfect isolation mode
+        elif working_isolated_controller:  # Isolation mode
             if current_session_id:
                 working_isolated_controller.destroy_session(current_session_id)
                 current_session_id = None
             working_isolated_controller.stop_server()
-            return "Perfect isolation server stopped."
+            return "Isolation server stopped."
         else:
             return "Error: No Prolog backend configured"
     except Exception as e:
