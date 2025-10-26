@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Controller for the working isolated multi-user Prolog server.
+Controller for the isolated multi-user Prolog server.
 This implementation achieves perfect session isolation.
 """
 
@@ -12,32 +12,32 @@ import os
 from typing import Dict, Optional
 import threading
 
-class WorkingIsolatedController:
-    """Controller for the working isolated multi-user server"""
-    
-    def __init__(self, port=8080, server_script="src/simple_isolated_server.py"):
+class IsolatedController:
+    """Controller for the isolated multi-user server"""
+
+    def __init__(self, port=8080, server_script="src/isolated_server.py"):
         self.port = port
         self.server_script = server_script
         self.process = None
         self.sessions: Dict[str, str] = {}
         
     def start_server(self, timeout_sec=10):
-        """Start the working isolated server"""
+        """Start the isolated server"""
         if self.process:
             raise RuntimeError("Server already running")
-            
+
         try:
             cmd = ["python3", self.server_script, "--port", str(self.port)]
-            
+
             self.process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 preexec_fn=os.setsid
             )
-            
-            print(f"⏳ Starting working isolated server on port {self.port}...")
-            
+
+            print(f"⏳ Starting isolated server on port {self.port}...")
+
             # Wait for server readiness
             start_time = time.time()
             while (time.time() - start_time) < timeout_sec:
@@ -55,7 +55,7 @@ class WorkingIsolatedController:
                             json={"action": "destroy", "session_id": data["session_id"]},
                             timeout=2
                         )
-                        print(f"✅ Working isolated server ready!")
+                        print(f"✅ Isolated server ready!")
                         return True
                 except (requests.ConnectionError, requests.Timeout):
                     time.sleep(0.5)
@@ -71,12 +71,12 @@ class WorkingIsolatedController:
             try:
                 os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
                 self.process.wait(timeout=5)
-                print("🛑 Working isolated server stopped")
+                print("🛑 Isolated server stopped")
             except (subprocess.TimeoutExpired, ProcessLookupError):
                 try:
                     os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
                     self.process.wait()
-                    print("🛑 Working isolated server force stopped")
+                    print("🛑 Isolated server force stopped")
                 except ProcessLookupError:
                     pass
             except Exception:
@@ -214,4 +214,4 @@ class WorkingIsolatedController:
 
 
 if __name__ == "__main__":
-    print("Working isolated multi-user controller with PERFECT session isolation!")
+    print("Isolated multi-user controller with PERFECT session isolation!")

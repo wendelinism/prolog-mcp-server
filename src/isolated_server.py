@@ -1,7 +1,6 @@
  #!/usr/bin/env python3
 """
-Simple isolated multi-user server that actually works.
-Uses process isolation to ensure session separation.
+Isolated multi-user server with process-based session separation.
 """
 
 import subprocess
@@ -14,8 +13,8 @@ import tempfile
 import shutil
 from typing import Dict, Optional, Tuple
 
-class SimpleIsolatedSession:
-    """Simple session with process-based isolation"""
+class IsolatedSession:
+    """Session with process-based isolation"""
     
     def __init__(self, session_id: str, timeout_sec: int = 300):
         self.session_id = session_id
@@ -25,7 +24,7 @@ class SimpleIsolatedSession:
         self.clauses = []
 
         # Create session directory
-        self.session_dir = tempfile.mkdtemp(prefix=f"prolog_simple_{self.session_id[:8]}_")
+        self.session_dir = tempfile.mkdtemp(prefix=f"prolog_isolated_{self.session_id[:8]}_")
     
     def start(self):
         """Initialize session"""
@@ -46,7 +45,7 @@ class SimpleIsolatedSession:
         query = query.rstrip('.')
 
         return f"""
-% Simple isolated session {self.session_id[:8]}
+% Isolated session {self.session_id[:8]}
 % Isolation via separate processes
 
 % Define session clauses
@@ -161,11 +160,11 @@ isolated_test :-
         return (time.time() - self.last_activity) > self.timeout_sec
 
 
-class SimpleIsolatedServer:
-    """Simple multi-user server with process isolation"""
-    
+class IsolatedServer:
+    """Multi-user server with process isolation"""
+
     def __init__(self, session_timeout_sec: int = 300):
-        self.sessions: Dict[str, SimpleIsolatedSession] = {}
+        self.sessions: Dict[str, IsolatedSession] = {}
         self.session_timeout = session_timeout_sec
         self.cleanup_thread = None
         self.running = False
@@ -189,7 +188,7 @@ class SimpleIsolatedServer:
         """Create session"""
         session_id = str(uuid.uuid4())
         with self.lock:
-            session = SimpleIsolatedSession(session_id, self.session_timeout)
+            session = IsolatedSession(session_id, self.session_timeout)
             session.start()
             self.sessions[session_id] = session
         return session_id
@@ -203,7 +202,7 @@ class SimpleIsolatedServer:
                 return True
         return False
     
-    def get_session(self, session_id: str) -> Optional[SimpleIsolatedSession]:
+    def get_session(self, session_id: str) -> Optional[IsolatedSession]:
         """Get session"""
         with self.lock:
             return self.sessions.get(session_id)
@@ -278,7 +277,7 @@ class SimpleIsolatedServer:
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 
-class SimpleIsolatedHandler(BaseHTTPRequestHandler):
+class IsolatedHandler(BaseHTTPRequestHandler):
     server_instance = None
     
     def do_POST(self):
@@ -394,15 +393,15 @@ class SimpleIsolatedHandler(BaseHTTPRequestHandler):
         pass
 
 
-def start_simple_isolated_server(port: int = 8080):
-    """Start simple isolated server"""
-    server_instance = SimpleIsolatedServer()
+def start_isolated_server(port: int = 8080):
+    """Start isolated server"""
+    server_instance = IsolatedServer()
     server_instance.start()
-    
-    SimpleIsolatedHandler.server_instance = server_instance
-    
-    httpd = HTTPServer(('localhost', port), SimpleIsolatedHandler)
-    print(f"🔧 Simple isolated server started on http://localhost:{port}")
+
+    IsolatedHandler.server_instance = server_instance
+
+    httpd = HTTPServer(('localhost', port), IsolatedHandler)
+    print(f"🔧 Isolated server started on http://localhost:{port}")
     
     try:
         httpd.serve_forever()
@@ -415,9 +414,9 @@ def start_simple_isolated_server(port: int = 8080):
 
 if __name__ == "__main__":
     import argparse
-    
-    parser = argparse.ArgumentParser(description='Simple Isolated Multi-User Server')
+
+    parser = argparse.ArgumentParser(description='Isolated Multi-User Server')
     parser.add_argument('--port', type=int, default=8080, help='Port (default: 8080)')
     args = parser.parse_args()
-    
-    start_simple_isolated_server(args.port)
+
+    start_isolated_server(args.port)

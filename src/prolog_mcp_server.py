@@ -6,19 +6,19 @@ from fastmcp import FastMCP
 from prolog_server_start import PrologServerController
 from pengine_controller import PengineController
 from multi_user_controller import MultiUserPrologController
-from working_isolated_controller import WorkingIsolatedController
+from isolated_controller import IsolatedController
 
 # Global variables for different backends
 prolog = None
 pengine_controller = None
 multi_user_controller = None
-working_isolated_controller = None
+isolated_controller = None
 current_session_id = None
 session_lock = threading.Lock()
 
 def initialize_backend(transport="streamable-http", backend="isolated"):
     """Initialize the appropriate backend based on transport and backend type."""
-    global prolog, pengine_controller, multi_user_controller, working_isolated_controller
+    global prolog, pengine_controller, multi_user_controller, isolated_controller
     
     if transport == "stdio":
         # Single-user mode with Docker backend
@@ -33,8 +33,8 @@ def initialize_backend(transport="streamable-http", backend="isolated"):
             multi_user_controller = MultiUserPrologController(port=8081)
             print("Using new multi-user backend for HTTP transport")
         elif backend == "isolated":
-            working_isolated_controller = WorkingIsolatedController(port=8082)
-            print("Using isolation backend for HTTP transport (RECOMMENDED)")
+            isolated_controller = IsolatedController(port=8082)
+            print("Using isolated backend for HTTP transport (RECOMMENDED)")
         else:
             prolog = PrologServerController(port=9090)
             print("Using Docker backend for HTTP transport")
@@ -79,8 +79,8 @@ def add_clause(clause: str):
         return pengine_controller.add_clause(current_session_id, clause)
     elif multi_user_controller and current_session_id:  # New multi-user mode
         return multi_user_controller.add_clause(current_session_id, clause)
-    elif working_isolated_controller and current_session_id:  #  Isolation mode
-        return working_isolated_controller.add_clause(current_session_id, clause)
+    elif isolated_controller and current_session_id:  #  Isolated mode
+        return isolated_controller.add_clause(current_session_id, clause)
     else:
         return "Error: No Prolog backend available"
 
@@ -93,8 +93,8 @@ def get_clauses():
         return pengine_controller.get_clauses(current_session_id)
     elif multi_user_controller and current_session_id:  # New multi-user mode
         return multi_user_controller.get_clauses(current_session_id)
-    elif working_isolated_controller and current_session_id:  # Isolation mode
-        return working_isolated_controller.get_clauses(current_session_id)
+    elif isolated_controller and current_session_id:  # Isolated mode
+        return isolated_controller.get_clauses(current_session_id)
     else:
         return "Error: No Prolog backend available"
 
@@ -107,8 +107,8 @@ def remove_clause(clause: str):
         return pengine_controller.remove_clause(current_session_id, clause)
     elif multi_user_controller and current_session_id:  # New multi-user mode
         return multi_user_controller.remove_clause(current_session_id, clause)
-    elif working_isolated_controller and current_session_id:  # Isolation mode
-        return working_isolated_controller.remove_clause(current_session_id, clause)
+    elif isolated_controller and current_session_id:  # Isolated mode
+        return isolated_controller.remove_clause(current_session_id, clause)
     else:
         return "Error: No Prolog backend available"
 
@@ -121,8 +121,8 @@ def query_prolog(query: str):
         return pengine_controller.query(current_session_id, query)
     elif multi_user_controller and current_session_id:  # New multi-user mode
         return multi_user_controller.query(current_session_id, query)
-    elif working_isolated_controller and current_session_id:  # Isolation mode
-        return working_isolated_controller.query(current_session_id, query)
+    elif isolated_controller and current_session_id:  # Isolated mode
+        return isolated_controller.query(current_session_id, query)
     else:
         return "Error: No Prolog backend available"
 
@@ -144,11 +144,11 @@ def start_prolog_server():
             with session_lock:
                 current_session_id = multi_user_controller.create_session()
             return f"Multi-user server started. Session ID: {current_session_id[:8]}..."
-        elif working_isolated_controller:  # Isolation mode
-            working_isolated_controller.start_server()
+        elif isolated_controller:  # Isolated mode
+            isolated_controller.start_server()
             with session_lock:
-                current_session_id = working_isolated_controller.create_session()
-            return f"Isolation server started. Session ID: {current_session_id[:8]}..."
+                current_session_id = isolated_controller.create_session()
+            return f"Isolated server started. Session ID: {current_session_id[:8]}..."
         else:
             return "Error: No Prolog backend configured"
     except Exception as e:
@@ -174,12 +174,12 @@ def stop_prolog_server():
                 current_session_id = None
             multi_user_controller.stop_server()
             return "Multi-user server stopped."
-        elif working_isolated_controller:  # Isolation mode
+        elif isolated_controller:  # Isolated mode
             if current_session_id:
-                working_isolated_controller.destroy_session(current_session_id)
+                isolated_controller.destroy_session(current_session_id)
                 current_session_id = None
-            working_isolated_controller.stop_server()
-            return "Isolation server stopped."
+            isolated_controller.stop_server()
+            return "Isolated server stopped."
         else:
             return "Error: No Prolog backend configured"
     except Exception as e:
@@ -201,9 +201,9 @@ def create_user_session():
             return f"Created session: {session_id[:8]}..."
         except Exception as e:
             return f"Failed to create session: {e}"
-    elif working_isolated_controller:
+    elif isolated_controller:
         try:
-            session_id = working_isolated_controller.create_session()
+            session_id = isolated_controller.create_session()
             return f"Created session: {session_id[:8]}..."
         except Exception as e:
             return f"Failed to create session: {e}"
@@ -225,9 +225,9 @@ def destroy_user_session(session_id: str):
             return f"Destroyed session: {session_id[:8]}..."
         except Exception as e:
             return f"Failed to destroy session: {e}"
-    elif working_isolated_controller:
+    elif isolated_controller:
         try:
-            working_isolated_controller.destroy_session(session_id)
+            isolated_controller.destroy_session(session_id)
             return f"Destroyed session: {session_id[:8]}..."
         except Exception as e:
             return f"Failed to destroy session: {e}"
@@ -270,9 +270,9 @@ def main():
                 multi_user_controller.stop_server()
             except:
                 pass
-        if working_isolated_controller:
+        if isolated_controller:
             try:
-                working_isolated_controller.stop_server()
+                isolated_controller.stop_server()
             except:
                 pass
         print("MCP Server stopped.")
