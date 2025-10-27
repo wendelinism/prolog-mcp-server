@@ -55,7 +55,7 @@ class PrologMCP(FastMCP):
         super().run(transport=transport, **kwargs)
 
 # Create MCP server instance
-prolog_mcp = PrologMCP(
+mcp = PrologMCP(
     name="Prolog MCP Server",
     instructions=(
         "Used for LLMs to interact with a SWI Prolog server. "
@@ -70,7 +70,7 @@ prolog_mcp = PrologMCP(
 
 # define single server functions as tools
 
-@prolog_mcp.tool()
+@mcp.tool()
 def add_clause(clause: str):
     """Add a Prolog clause to the server. A clause should solely exist of a single valid Prolog rule or Prolog fact, to be used for following Prolog queries."""
     if prolog:  # Single-user mode
@@ -84,7 +84,7 @@ def add_clause(clause: str):
     else:
         return "Error: No Prolog backend available"
 
-@prolog_mcp.tool()
+@mcp.tool()
 def get_clauses():
     """List all currently active Prolog clauses on the server."""
     if prolog:  # Single-user mode
@@ -98,7 +98,7 @@ def get_clauses():
     else:
         return "Error: No Prolog backend available"
 
-@prolog_mcp.tool()
+@mcp.tool()
 def remove_clause(clause: str):
     """Remove a Prolog clause from the server. The string must be identical to the one used in add_clause."""
     if prolog:  # Single-user mode
@@ -112,7 +112,7 @@ def remove_clause(clause: str):
     else:
         return "Error: No Prolog backend available"
 
-@prolog_mcp.tool()
+@mcp.tool()
 def query_prolog(query: str):
     """Execute a Prolog query on the server. The query must be a valid Prolog query string."""
     if prolog:  # Single-user mode
@@ -126,7 +126,7 @@ def query_prolog(query: str):
     else:
         return "Error: No Prolog backend available"
 
-@prolog_mcp.tool()
+@mcp.tool()
 def start_prolog_server():
     """Start the Prolog server."""
     global current_session_id
@@ -154,7 +154,7 @@ def start_prolog_server():
     except Exception as e:
         return f"Failed to start Prolog server: {e}"
 
-@prolog_mcp.tool()
+@mcp.tool()
 def stop_prolog_server():
     """Stop the Prolog server."""
     global current_session_id
@@ -186,7 +186,7 @@ def stop_prolog_server():
         return f"Failed to stop Prolog server: {e}"
 
 
-@prolog_mcp.tool()
+@mcp.tool()
 def create_user_session():
     """Create a new user session (multi-user mode only)."""
     if pengine_controller:
@@ -210,7 +210,7 @@ def create_user_session():
     else:
         return "Error: Multi-user mode not available"
 
-@prolog_mcp.tool()
+@mcp.tool()
 def destroy_user_session(session_id: str):
     """Destroy a user session (multi-user mode only)."""
     if pengine_controller:
@@ -250,7 +250,7 @@ def main():
     
     try:
         print(f"Starting MCP Server with {args.transport} transport...")
-        prolog_mcp.run(transport=args.transport)
+        mcp.run(transport=args.transport)
     except KeyboardInterrupt:
         print("MCP Server stopped by user.")
     finally:
