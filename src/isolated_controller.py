@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Controller for the isolated multi-user Prolog server.
-This implementation achieves perfect session isolation.
+This implementation achieves session isolation.
 """
 
 import requests
@@ -214,4 +214,4 @@ class IsolatedController:
 
 
 if __name__ == "__main__":
-    print("Isolated multi-user controller with PERFECT session isolation!")
+    print("Isolated multi-user controller with session isolation!")
