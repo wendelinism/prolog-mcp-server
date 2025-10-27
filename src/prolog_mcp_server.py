@@ -250,7 +250,7 @@ def main():
     
     try:
         print(f"Starting MCP Server with {args.transport} transport...")
-        mcp.run(transport=args.transport)
+        mcp.run(transport=args.transport, host="0.0.0.0")
     except KeyboardInterrupt:
         print("MCP Server stopped by user.")
     finally:
